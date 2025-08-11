@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <style>
+      body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+      .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+      .header { background-color: #3B82F6; color: white; padding: 20px; text-align: center; }
+      .content { background-color: #f9f9f9; padding: 20px; }
+      .button { display: inline-block; padding: 12px 24px; background-color: #3B82F6; color: white; text-decoration: none; border-radius: 5px; margin: 10px 0; }
+      .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Welcome to Pairpen!</h1>
+      </div>
+      
+      <div class="content">
+        <h2>Hi there!</h2>
+        
+        <p>Thank you for applying to join our pen pal community. We're excited that you want to connect with someone through the art of written correspondence!</p>
+        
+        <p>To complete your application, please verify your email address by clicking the button below:</p>
+        
+        <p style="text-align: center;">
+          <a href="<%= @verification_url %>" class="button">Verify My Email</a>
+        </p>
+        
+        <p>Once verified, our team will review your application and you'll be able to check your status anytime using this link:</p>
+        
+        <p><a href="<%= @status_url %>">Check Application Status</a></p>
+        
+        <p>If you have any questions, feel free to reply to this email.</p>
+        
+        <p>Happy writing!<br>
+        The Pairpen Team</p>
+      </div>
+      
+      <div class="footer">
+        <p>If the button above doesn't work, copy and paste this link into your browser:<br>
+        <%= @verification_url %></p>
+      </div>
+    </div>
+  </body>
+</html>

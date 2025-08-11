@@ -1,0 +1,176 @@
+<div class="min-h-screen bg-gray-50">
+  <!-- Header -->
+  <div class="bg-white shadow">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center py-6">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+          <p class="text-sm text-gray-600">Manage pen pal applications</p>
+        </div>
+        <div class="flex items-center space-x-4">
+          <span class="text-sm text-gray-700">Welcome, <%= current_admin.name %>!</span>
+          <%= link_to "Logout", admin_logout_path, method: :delete, 
+              class: "bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium" %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <!-- Status Overview -->
+    <div class="mb-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
+      <% Application::STATUSES.each do |status| %>
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+          <div class="p-5">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                  <span class="text-white font-semibold"><%= @status_counts[status] || 0 %></span>
+                </div>
+              </div>
+              <div class="ml-5 w-0 flex-1">
+                <dl>
+                  <dt class="text-sm font-medium text-gray-500 truncate">
+                    <%= status.humanize %>
+                  </dt>
+                  <dd>
+                    <%= link_to "View", admin_applications_path(status: status), 
+                        class: "text-blue-600 hover:text-blue-500 text-sm" %>
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- Filters -->
+    <div class="mb-6 bg-white shadow rounded-lg">
+      <div class="px-4 py-5 sm:p-6">
+        <div class="flex flex-wrap items-center justify-between">
+          <div class="flex space-x-2">
+            <%= link_to "All", admin_applications_path, 
+                class: "px-3 py-1 rounded-md text-sm #{'bg-blue-100 text-blue-800' if params[:status].blank?} #{'text-gray-600 hover:text-gray-900' unless params[:status].blank?}" %>
+            <% Application::STATUSES.each do |status| %>
+              <%= link_to status.humanize, admin_applications_path(status: status), 
+                  class: "px-3 py-1 rounded-md text-sm #{'bg-blue-100 text-blue-800' if params[:status] == status} #{'text-gray-600 hover:text-gray-900' unless params[:status] == status}" %>
+            <% end %>
+          </div>
+          <div class="flex items-center space-x-2">
+            <%= link_to "Matches", admin_matches_path, 
+                class: "bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm font-medium" %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bulk Actions -->
+    <%= form_with url: bulk_update_admin_applications_path, method: :patch, local: true do |form| %>
+      <div class="mb-4 bg-white shadow rounded-lg">
+        <div class="px-4 py-3 flex items-center justify-between">
+          <div class="flex items-center space-x-4">
+            <label class="inline-flex items-center">
+              <input type="checkbox" id="select-all" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+              <span class="ml-2 text-sm text-gray-700">Select All</span>
+            </label>
+          </div>
+          <div class="flex items-center space-x-2">
+            <%= form.select :bulk_action, 
+                options_for_select([['Choose action...', ''], ['Approve', 'approve'], ['Reject', 'reject']]),
+                {},
+                { class: "rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50" } %>
+            <%= form.submit "Apply", 
+                class: "bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium" %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Applications List -->
+      <div class="bg-white shadow overflow-hidden sm:rounded-md">
+        <ul class="divide-y divide-gray-200">
+          <% @applications.each do |application| %>
+            <li class="px-6 py-4">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center min-w-0 flex-1">
+                  <div class="flex-shrink-0">
+                    <% if application.status == 'pending' %>
+                      <%= form.check_box :application_ids, 
+                          { multiple: true, class: "rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 select-application" }, 
+                          application.id, false %>
+                    <% end %>
+                  </div>
+                  <div class="ml-4 min-w-0 flex-1">
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <p class="text-sm font-medium text-gray-900 truncate">
+                          <%= application.email %>
+                        </p>
+                        <p class="text-sm text-gray-500">
+                          Applied <%= time_ago_in_words(application.created_at) %> ago
+                          <% if application.verified? %>
+                            • Verified <%= time_ago_in_words(application.verified_at) %> ago
+                          <% end %>
+                        </p>
+                      </div>
+                      <div class="flex items-center space-x-2">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                          <%= case application.status
+                              when 'unverified' then 'bg-yellow-100 text-yellow-800'
+                              when 'pending' then 'bg-blue-100 text-blue-800'
+                              when 'approved' then 'bg-green-100 text-green-800'
+                              when 'rejected' then 'bg-red-100 text-red-800'
+                              when 'matched' then 'bg-purple-100 text-purple-800'
+                              end %>">
+                          <%= application.status.humanize %>
+                        </span>
+                      </div>
+                    </div>
+                    <div class="mt-2">
+                      <p class="text-sm text-gray-600 line-clamp-2">
+                        <%= truncate(application.application_text, length: 150) %>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div class="ml-5 flex-shrink-0 flex space-x-2">
+                  <%= link_to "View", admin_application_path(application), 
+                      class: "text-blue-600 hover:text-blue-500 text-sm font-medium" %>
+                  <% if application.status == 'pending' %>
+                    <%= link_to "Approve", admin_application_approve_path(application), 
+                        method: :patch,
+                        class: "text-green-600 hover:text-green-500 text-sm font-medium",
+                        data: { confirm: "Are you sure?" } %>
+                    <%= link_to "Reject", admin_application_reject_path(application), 
+                        method: :patch,
+                        class: "text-red-600 hover:text-red-500 text-sm font-medium",
+                        data: { confirm: "Are you sure?" } %>
+                  <% end %>
+                </div>
+              </div>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <% if @applications.empty? %>
+      <div class="text-center py-12">
+        <p class="text-gray-500">No applications found.</p>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const selectAll = document.getElementById('select-all');
+  const checkboxes = document.querySelectorAll('.select-application');
+  
+  selectAll?.addEventListener('change', function() {
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = this.checked;
+    });
+  });
+});
+</script>
